@@ -7,8 +7,8 @@ I = qt.qeye(2)
 SX = qt.sigmax()
 SY = qt.sigmay()
 SZ = qt.sigmaz()
-SPlus = 0.5 * (SX + 1j*SY)
-SMinus = 0.5 * (SX - 1j*SY)
+SPlus = qt.sigmap()
+SMinus = qt.sigmam()
 # Do a lindblad-ish thing
 # Calculate d-pho/dt for each step totally w/ fine-grained t
 # Alternatively, use the MC recipe from harroche
@@ -37,18 +37,19 @@ def get_bloch_tuple(dm):
     return u,v,w
 
 
-def get_M0(H,lindblads):
+def get_M0(H,lindblads,tau):
     J = qt.Qobj(np.zeros_like(H.data.todense()),dims=[[2,2],[2,2]])
     for Op in lindblads:
         J += Op.dag()*Op
     J *= 0.5
-    return qt.tensor(I,I) - 1j*H - J
+    return qt.tensor(I,I) - tau*(1j*H - J)
 
-def do_jump_mc(state,H,lindblads,steps=100):
+def do_jump_mc(state,H,lindblads,steps=1000,tau=1/100):
     """Quantum Jump Monte Carlo for simulating Master Equation dynamics. 
         Implemented following the recipe in Harroche & Raimond 
     """
     #Prebuild arrays
+    tau = 1/steps
     xp_1 = np.zeros(steps, dtype=np.complex_)
     yp_1 = np.zeros_like(xp_1, dtype=np.complex_)
     zp_1 = np.zeros_like(xp_1, dtype=np.complex_)
@@ -58,7 +59,7 @@ def do_jump_mc(state,H,lindblads,steps=100):
     #Check if our lindblads are time/state dependent
     time_dependent = any([hasattr(Op,'__call__')] for Op in lindblads)
     #Build the regular old evolution operator M0
-    M0 = get_M0(H,lindblads)
+    M0 = get_M0(H, lindblads,tau)
     for i in range(steps):
         #Refresh lindblads if time dependent
         q1 = qt.ket2dm(state).ptrace(0)
@@ -73,10 +74,10 @@ def do_jump_mc(state,H,lindblads,steps=100):
         zp_2[i] = z2
         if time_dependent:
             #Refresh lindlabds if necessary
-            lindblads = [Op(state, i) if type(Op)=='function' else Op for Op in lindblads]
+            lindblads = [Op(state, i*tau) if type(Op)=='function' else Op for Op in lindblads]
             #Refresh J, 'regular' evolution operator
-            M0 = get_M0(H,lindblads)
-        p_jump = np.array([get_prob(state, Op) for Op in lindblads], dtype=np.complex_)
+            M0 = get_M0(H,lindblads,tau)
+        p_jump = np.array([tau*get_prob(state, Op) for Op in lindblads], dtype=np.complex_)
         p_nojump = 1.-np.sum(p_jump)
         r = random()
         if r > p_nojump:
@@ -84,32 +85,32 @@ def do_jump_mc(state,H,lindblads,steps=100):
             #Find the correct jump operator
             n = find_jump(r,p_jump)
             if n is not None:
-                state = lindblads[n]*state
+                state = lindblads[n]*state / np.sqrt(p_jump[n]/tau)
             else:#Fallback option, sometimes necessary due to floating point weirdness
-                state = M0*state
+                state = M0*state / np.sqrt(p_nojump)
         else:
-            state = M0*state
-        state = state.unit()
+            state = M0*state / np.sqrt(p_nojump)
+        state = state.unit()    
     return xp_1,yp_1,zp_1,xp_2,yp_2,zp_2
 
 def do_genericT2_mc():
     pass
 
-def drho(rho,H,lindblads=[]):
+def drho(rho,H,lindblads):
     res = -1j* qt.commutator(H,rho)
     if lindblads:
         for l in lindblads:
             res += (l*rho*l.dag() -0.5* l.dag()*l*rho - 0.5*rho*l.dag()*l)
     return res
 
-def do_rk4_step(rho,H,lindblads=[]):
+def do_rk4_step(rho,H,lindblads,tau):
     k1 = drho(rho,H,lindblads)
-    k2 = drho(rho+0.5*k1,H,lindblads)
-    k3 = drho(rho+0.5*k2,H,lindblads)
-    k4 = drho(rho+k3,H,lindblads)
-    return (k1 + 2*k2 + 2*k3 + k4)/6.
+    k2 = drho(rho+0.5*tau*k1,H,lindblads)
+    k3 = drho(rho+0.5*tau*k2,H,lindblads)
+    k4 = drho(rho+tau*k3,H,lindblads)
+    return (k1 + 2*k2 + 2*k3 + k4)*tau/6.
 
-def do_rk4(state,H,lindblads=[],steps=5000):
+def do_rk4(state,H,lindblads=[],steps=1000,tau=1/1000):
     rho = qt.ket2dm(state)
     xp_1 = np.zeros(steps, dtype=np.complex_)
     yp_1 = np.zeros_like(xp_1, dtype=np.complex_)
@@ -128,5 +129,5 @@ def do_rk4(state,H,lindblads=[],steps=5000):
         xp_2[i] = x2
         yp_2[i] = y2
         zp_2[i] = z2
-        rho = rho + do_rk4_step(rho,H)
+        rho = (rho + do_rk4_step(rho,H,lindblads,tau))
     return xp_1,yp_1,zp_1,xp_2,yp_2,zp_2
