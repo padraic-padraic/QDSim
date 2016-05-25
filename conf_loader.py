@@ -64,7 +64,8 @@ def load(fname):
         conf = yaml.load(f, Loader=LOADER)
     _type = conf.get('type', None)
     _params = conf.get('params', {})
-    validate_type(_type, _params)
+    if _params: #Otherwise, we fall back to the defaults
+        validate_type(_type, _params)
     vals = []
     for _key in H_PARAMS[_type]:
         _val = _params.get(_key, DEFAULTS[_type][_key])
