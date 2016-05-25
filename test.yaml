@@ -1,0 +1,8 @@
+type: 'full'
+params:
+  w1: 5e9
+  w2: 5e9
+  wc: 5e9
+  g1: 6e8
+  g2: 6e8
+  cav_dim: 5
