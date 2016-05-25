@@ -7,6 +7,7 @@ I = qt.qeye(2)
 SX = qt.sigmax()
 SY = qt.sigmay()
 SZ = qt.sigmaz()
+#We're treating '1' as the excited state
 SPlus = qt.sigmam()
 SMinus = qt.sigmap()
 # Do a lindblad-ish thing
@@ -83,6 +84,7 @@ def do_jump_mc(state,H,lindblads,steps=1000,tau=1/100):
         if cavity_sim:
             n[i] = (num* dm.ptrace(cav_index)).tr()
         components = [measure_qubit(dm.ptrace(np.asscalar(i))) for i in qubit_indices]
+        bloch_vectors[i] = components
         if time_dependent:
             #Refresh lindlabds if necessary
             lindblads = [Op(state, i*tau) if type(Op)=='function' else Op for Op in lindblads]
@@ -133,5 +135,6 @@ def do_rk4(state,H,lindblads=[],steps=1000,tau=1/1000):
         if cavity_sim:
             n[i] = (num* dm.ptrace(cav_index)).tr()
         components = [measure_qubit(dm.ptrace(np.asscalar(i))) for i in qubit_indices]
+        bloch_vectors[i] = components
         rho = (rho + do_rk4_step(rho,H,lindblads,tau))
     return bloch_vectors,n
