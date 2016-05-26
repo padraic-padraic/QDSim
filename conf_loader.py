@@ -45,35 +45,64 @@ H_FUNC = {
     '2q_direct': direct_hamiltonian
 }
 
-def validate_type(_type, params):
-    """Check that we have all the parameters we need for this type of Hamiltonian"""
-    if any([_key not in params for _key in H_PARAMS[_type]]):
-        raise KeyError('Missing parameter for this Hamiltonian type!')
+class Conf():
+    def __init__(self,fname):
+        with open(fname, 'r') as f:
+            conf = yaml.load(f, Loader=LOADER)
+            self.type = conf.get('type', None)
+            self.params = conf.get('params', {})
+        if self.params:
+            self._validate_type()
 
-def process_symb(expr, params):
-    """Evaluate a parameter from its symbolic form"""
-    expr = sympify(expr)
-    _vars = expr.free_symbols
-    for var in _vars:
-        expr.subs(var, params[var.__str__()], eval=False)
-    return expr.evalf()
+    def _validate_type(self):
+        """Check that we have all the parameters we need for this type of Hamiltonian"""
+        if any([_key not in self.params for _key in H_PARAMS[self.type]]):
+            raise KeyError('Missing parameter for this Hamiltonian type!')
 
-# def 
+    def _process_symb(expr, params):
+        """Evaluate a parameter from its symbolic form"""
+        expr = sympify(expr)
+        _vars = expr.free_symbols
+        for var in _vars:
+            expr.subs(var, params[var.__str__()], eval=False)
+        return expr.evalf()
 
-def load(fname):
-    """Load and return the Hamiltonian from a config file."""
-    with open(fname, 'r') as f:
-        conf = yaml.load(f, Loader=LOADER)
-    _type = conf.get('type', None)
-    _params = conf.get('params', {})
-    if _params: #Otherwise, we fall back to the defaults
-        validate_type(_type, _params)
-    vals = []
-    for _key in H_PARAMS[_type]:
-        _val = _params.get(_key, DEFAULTS[_type][_key])
-        if isinstance(_val, str):
-            vals.append(process_symb(_val, _params))
-        else:
-            vals.append(_val)
-    return H_FUNC[_type](*vals)
+    def H(self):
+        vals = []
+        for _key in H_PARAMS[self.type]:
+            _val = self.params.get(_key, DEFAULTS[self.type][_key])
+            if isinstance(_val, str):
+                vals.append(self._process_symb(_val, self.params))
+            else:
+                vals.append(_val)
+        return H_FUNC[self.type](*vals)
 
+    def build_generator_func(params):
+        iter_keys = [key for key in params.keys() if isinstance(params[key], list)]
+
+# ----- Methods used to calculate the Swap-Basis transform, taken from 10.1103/PhysRevA.75.032329 ----- #
+    @property
+    def iSWAP_U(self):
+        dim = self.params['cav_dim']
+        if self.type != 'full':
+            return None
+        a = qt.tensor(qt.destroy(dim), I, I)
+        sm1 = qt.tensor(qt.qeye(dim), SMinus, I)
+        sm2 = qt.tensor(qt.qeye(dim), I, SMinus)
+        sp1 = qt.tensor(qt.qeye(dim), SPlus, I)
+        sp2 = qt.tensor(qt.qeye(dim), I, SPlus)
+        return expm(
+                    (self.params['g_1']/self.delta(1)) * (a.dag()*sm1 - a*sp1) +
+                    (self.params['g_2']/self.delta(2)) * (a.dag()*sm2 - a*sp2))
+
+    def delta(self, qubit):
+        if self.type == '1qb' && qubit > 1:
+            raise Exception
+        return self.params['w_'+str(qubit)] - self.params['w_c']
+
+    def chi(self,qubit):
+        if self.type == '1qb' && qubit > 1:
+            raise Exception
+        g = self.params['g_'+str(i)]
+        delta = self.delta(qubit)
+    return g*g/delta

@@ -5,6 +5,8 @@ of parameters, defaults and functions in QDSim.conf_loader.
 
 from QDSim import qt, I, SZ, SPlus, SMinus
 
+hbar = 1.05e-34
+
 def full_hamiltonian(cav_dim, w_1, w_2, w_c, g_1, g_2):
     """Return a QObj denoting the full Hamiltonian including cavity
      and two qubits"""
