@@ -38,6 +38,9 @@ q2 = qt.basis(2,0)
 
 # lindblads = [L1,L2]
 
+def load_H():
+    H = load(fname)
+
 def test_mc_sim():
     sim = Simulation(do_jump_mc,qt.tensor(cav,q1,q2),H)
     return sim.run_solver()
@@ -45,6 +48,10 @@ def test_mc_sim():
 def test_rk4_sim():
     sim = Simulation(do_rk4,qt.tensor(cav,q1,q2),H)
     sim.run_solver()
+
+def test_parallel():
+    sim = Simulation(do_jump_mc,qt.tensor(cav,q1,q2),H)
+    repeat_execution(sim.run_solver,[],5)
 
 if __name__ == '__main__':    
     # bloch_vectors,n = test_mc_sim()
@@ -59,6 +66,12 @@ if __name__ == '__main__':
     #     b.clear()
     #     b.add_points([x1[:i+1],y1[:i+1],z1[:i+1]])
     #     b.save(dirc='temp')
-    import timeit
-    print(timeit.Timer("test_mc_sim()",setup="from __main__ import test_mc_sim").repeat(3,1))
-    print(timeit.Timer("test_rk4_sim()",setup="from __main__ import test_rk4_sim").repeat(3,1))
+    # import timeit
+    # print(timeit.Timer("load_H()",setup="from __main__ import load_H").repeat(3,1))
+    # print(timeit.Timer("test_mc_sim()",setup="from __main__ import test_mc_sim").repeat(3,1))
+    # print(timeit.Timer("test_rk4_sim()",setup="from __main__ import test_rk4_sim").repeat(3,1))
+    from QDSim.dispatcher import repeat_execution
+    sim = Simulation(do_jump_mc,qt.tensor(cav,q1,q2),H)
+    res = repeat_execution(sim.run_solver,[],1)
+    print(type(res))
+    print(res[0][0].shape)

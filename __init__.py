@@ -63,7 +63,7 @@ def parse_dims(state):
     else:
         return indices[qubits],np.asscalar(indices[cav])
 
-def do_jump_mc(state,H,lindblads,steps=1000,tau=1/100):
+def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1/100):
     """Quantum Jump Monte Carlo for simulating Master Equation dynamics. 
         Implemented following the recipe in Harroche & Raimond 
     """
