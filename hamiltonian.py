@@ -8,13 +8,15 @@ from QDSim import qt, I, SZ, SPlus, SMinus
 def full_hamiltonian(cav_dim, w_1, w_2, w_c, g_1, g_2):
     """Return a QObj denoting the full Hamiltonian including cavity
      and two qubits"""
-    return (w_c * qt.tensor(qt.num(cav_dim), I, I) +
-            w_1 * qt.tensor(qt.qeye(cav_dim), SZ, I) +
-            w_2 * qt.tensor(qt.qeye(cav_dim), I, SZ) +
-            g_1 * qt.tensor(qt.create(cav_dim), SMinus, I) +
+    a = qt.destroy(cav_dim)
+    num = a.dag() * a
+    return (g_1 * qt.tensor(qt.create(cav_dim), SMinus, I) +
             g_1 * qt.tensor(qt.destroy(cav_dim), SPlus, I) +
             g_2 * qt.tensor(qt.create(cav_dim), I, SMinus) +
-            g_2 * qt.tensor(qt.destroy(cav_dim), I, SPlus))
+            g_2 * qt.tensor(qt.destroy(cav_dim), I, SPlus) +
+            w_c * qt.tensor(num, I, I) +
+            w_1 * qt.tensor(qt.qeye(cav_dim), SZ, I) +
+            w_2 * qt.tensor(qt.qeye(cav_dim), I, SZ))
 
 def single_hamiltonian(cav_dim, w_1, w_c, g_factor):
     """Return a QObj denoting a hamiltonian for one qubit coupled to a

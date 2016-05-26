@@ -47,7 +47,7 @@ H_FUNC = {
 
 def validate_type(_type, params):
     """Check that we have all the parameters we need for this type of Hamiltonian"""
-    if any([_key not in H_PARAMS[_type] for _key in params]):
+    if any([_key not in params for _key in H_PARAMS[_type]]):
         raise KeyError('Missing parameter for this Hamiltonian type!')
 
 def process_symb(expr, params):
@@ -57,6 +57,8 @@ def process_symb(expr, params):
     for var in _vars:
         expr.subs(var, params[var.__str__()], eval=False)
     return expr.evalf()
+
+# def 
 
 def load(fname):
     """Load and return the Hamiltonian from a config file."""

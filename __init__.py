@@ -8,8 +8,8 @@ SX = qt.sigmax()
 SY = qt.sigmay()
 SZ = qt.sigmaz()
 #We're treating '1' as the excited state
-SPlus = qt.sigmam()
-SMinus = qt.sigmap()
+SPlus = qt.create(2)
+SMinus = qt.destroy(2)
 # Do a lindblad-ish thing
 # Calculate d-pho/dt for each step totally w/ fine-grained t
 # Alternatively, use the MC recipe from harroche
@@ -39,6 +39,7 @@ def get_prob(dm,L):
     return (L.dag()*L*dm).tr()
 
 def measure_qubit(dm):
+    dm = dm.unit()
     u = (SX*dm).tr()
     v = (SY*dm).tr()
     w = (SZ*dm).tr()
@@ -61,19 +62,19 @@ def parse_dims(state):
     if not any(cav):
         return indices[qubits],None
     else:
-        return indices[qubits],np.asscalar(indices[cav])
+        return list(indices[qubits]),np.asscalar(indices[cav])
 
 def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1./10000):
     """Quantum Jump Monte Carlo for simulating Master Equation dynamics. 
         Implemented following the recipe in Harroche & Raimond 
     """
     #Prebuild arrays
-    tau = 1/steps
     qubit_indices,cav_index = parse_dims(state)
     cavity_sim = cav_index is not None
     bloch_vectors = np.zeros((steps,len(qubit_indices),3),dtype=np.complex_)
     n = np.zeros(steps, dtype=np.complex_)
-    num = qt.num(state.dims[0][cav_index])
+    a = qt.destroy(state.dims[0][cav_index])
+    num = a.dag()*a
     #Check if our lindblads are time/state dependent
     time_dependent = any([hasattr(Op,'__call__')] for Op in lindblads)
     #Build the regular old evolution operator M0
@@ -83,7 +84,7 @@ def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1./10000):
         dm = qt.ket2dm(state)
         if cavity_sim:
             n[i] = (num* dm.ptrace(cav_index)).tr()
-        components = [measure_qubit(dm.ptrace(np.asscalar(i))) for i in qubit_indices]
+        components = [measure_qubit(dm.ptrace(np.asscalar(int(i)))) for i in qubit_indices]
         bloch_vectors[i] = components
         if time_dependent:
             #Refresh lindlabds if necessary
@@ -102,7 +103,7 @@ def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1./10000):
             else:#Fallback option, sometimes necessary due to floating point weirdness
                 state = M0*state / np.sqrt(p_nojump)
         else:
-            state = M0*state / np.sqrt(p_nojump)
+            state = M0 * state / np.sqrt(p_nojump)
         state = state.unit()
     return bloch_vectors,n
 
@@ -113,28 +114,61 @@ def drho(rho,H,lindblads):
     res = -1j* qt.commutator(H,rho)
     if lindblads:
         for l in lindblads:
-            res += (l*rho*l.dag() -0.5* l.dag()*l*rho - 0.5*rho*l.dag()*l)
+            res += (l*rho*l.dag() - 0.5* l.dag()*l*rho - 0.5*rho*l.dag()*l)
     return res
 
-def do_rk4_step(rho,H,lindblads,tau):
+def do_qt_mcsolve(state,H,lindblads,steps,tau,**kwargs):
+    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
+    n = kwargs.get('ntraj',None)
+    results = qt.mcsolve_f90(H,state,times,lindblads,[],ntraj=n)
+    qubit_indices,cav_index = parse_dims(state)
+    cavity_sim = cav_index is not None
+    if cavity_sim:
+        n = qt.num(state.dims[0][cav_index])
+    bloch_vectors = np.zeros((steps,len(qubit_indices),3),dtype=np.complex_)
+    ns = np.zeros(steps,dtype=np.complex_)
+    for i, state in enumerate(results.states):
+        dm = qt.ket2dm(state)
+        bloch_vectors[i] = [measure_qubit(dm.ptrace(int(i))) for i in qubit_indices]
+        if cavity_sim:
+            ns[i] = (n*dm.ptrace(cav_index)).tr()
+    return bloch_vectors,ns
+
+def do_qt_mesolve(state,H,lindblads,steps,tau,**kwargs):
+    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
+    results = qt.mcsolve_f90(H,qt.ket2dm(state),times,lindblads,[])
+    qubit_indices,cav_index = parse_dims(state)
+    cavity_sim = cav_index is not None
+    if cavity_sim:
+        n = qt.num(state.dims[0][cav_index])
+    bloch_vectors = np.zeros((steps,len(qubit_indices),3),dtype=np.complex_)
+    ns = np.zeros(steps,dtype=np.complex_)
+    for i, state in enumerate(results.states):
+        dm = qt.ket2dm(state)
+        bloch_vectors[i] = [measure_qubit(dm.ptrace(int(i))) for i in qubit_indices]
+        if cavity_sim:
+            ns[i] = (n*dm.ptrace(cav_index)).tr()
+    return bloch_vectors,ns
+
+
+def do_rk4_step(rho,H,lindblads,tau,**kwargs):
     k1 = drho(rho,H,lindblads)
     k2 = drho(rho+0.5*tau*k1,H,lindblads)
     k3 = drho(rho+0.5*tau*k2,H,lindblads)
     k4 = drho(rho+tau*k3,H,lindblads)
     return (k1 + 2*k2 + 2*k3 + k4)*tau/6.
 
-def do_rk4(state,H,lindblads=[],steps=1000,tau=1/100):
+def do_rk4(state,H,lindblads=[],steps=1000,tau=1/100,**kwargs):
     rho = qt.ket2dm(state)
     qubit_indices,cav_index = parse_dims(state)
     bloch_vectors = np.zeros((steps,len(qubit_indices),3),dtype=np.complex_)
     n = np.zeros(steps, dtype=np.complex_)
-    num = qt.num(state.dims[0][cav_index])
+    num = qt.create(state.dims[0][cav_index])*qt.destroy(state.dims[0][cav_index])
     cavity_sim = cav_index is not None
     for i in range(steps):
-        dm = qt.ket2dm(state)
         if cavity_sim:
-            n[i] = (num* dm.ptrace(cav_index)).tr()
-        components = [measure_qubit(dm.ptrace(np.asscalar(i))) for i in qubit_indices]
+            n[i] = (num * rho.ptrace(cav_index)).tr()
+        components = [measure_qubit(rho.ptrace(np.asscalar(i))) for i in qubit_indices]
         bloch_vectors[i] = components
         rho = (rho + tau*do_rk4_step(rho,H,lindblads,tau))
         rho = rho.unit()
