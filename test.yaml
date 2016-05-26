@@ -3,6 +3,6 @@ params:
   w_1: 5e9
   w_2: 5e9
   w_c: 5e9
-  g_1: 6e8
-  g_2: 6e8
+  g_1: 6e9
+  g_2: 6e9
   cav_dim: 5

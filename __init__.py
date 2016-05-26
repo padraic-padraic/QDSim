@@ -63,7 +63,7 @@ def parse_dims(state):
     else:
         return indices[qubits],np.asscalar(indices[cav])
 
-def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1/100):
+def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1./10000):
     """Quantum Jump Monte Carlo for simulating Master Equation dynamics. 
         Implemented following the recipe in Harroche & Raimond 
     """
@@ -123,7 +123,7 @@ def do_rk4_step(rho,H,lindblads,tau):
     k4 = drho(rho+tau*k3,H,lindblads)
     return (k1 + 2*k2 + 2*k3 + k4)*tau/6.
 
-def do_rk4(state,H,lindblads=[],steps=1000,tau=1/1000):
+def do_rk4(state,H,lindblads=[],steps=1000,tau=1/100):
     rho = qt.ket2dm(state)
     qubit_indices,cav_index = parse_dims(state)
     bloch_vectors = np.zeros((steps,len(qubit_indices),3),dtype=np.complex_)
@@ -136,5 +136,6 @@ def do_rk4(state,H,lindblads=[],steps=1000,tau=1/1000):
             n[i] = (num* dm.ptrace(cav_index)).tr()
         components = [measure_qubit(dm.ptrace(np.asscalar(i))) for i in qubit_indices]
         bloch_vectors[i] = components
-        rho = (rho + do_rk4_step(rho,H,lindblads,tau))
+        rho = (rho + tau*do_rk4_step(rho,H,lindblads,tau))
+        rho = rho.unit()
     return bloch_vectors,n
