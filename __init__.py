@@ -61,11 +61,26 @@ def get_M0(H,lindblads,tau):
 def parse_dims(dims):
     qubits = dims == 2
     cav = np.logical_not(qubits)
-    indices = np.arange(dims.size)
+    indices = np.arange(len(dims))
     if not any(cav):
         return indices[qubits],None
     else:
         return list(indices[qubits]),np.asscalar(indices[cav])
+
+def do_qt_mcsolve(state,H,lindblads,steps,tau,**kwargs):
+    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
+    if kwargs:
+        return qt.mcsolve(H,state,times,lindblads,[],
+                             options=qt.Options(**kwargs)).states
+    
+
+def do_qt_mesolve(state,H,lindblads,steps,tau,**kwargs):
+    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
+    if kwargs:
+        return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[],
+                             options=qt.Options(**kwargs)).states
+    else:
+        return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[]).states
 
 def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1./10000):
     """Quantum Jump Monte Carlo for simulating Master Equation dynamics. 
@@ -109,25 +124,6 @@ def drho(rho,H,lindblads):
         for l in lindblads:
             res += (l*rho*l.dag() - 0.5* l.dag()*l*rho - 0.5*rho*l.dag()*l)
     return res
-
-def do_qt_mcsolve(state,H,lindblads,steps,tau,**kwargs):
-    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
-    n = kwargs.pop('ntraj',None)
-    if kwargs:
-        return qt.mcsolve(H,qt.ket2dm(state),times,lindblads,[],
-                             options=qt.Options(**kwargs)).states
-    else:
-        return qt.mcsolve(H,state,times,lindblads,[],ntraj=n).states
-    
-
-def do_qt_mesolve(state,H,lindblads,steps,tau,**kwargs):
-    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
-    if kwargs:
-        return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[],
-                             options=qt.Options(**kwargs)).states
-    else:
-        return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[])
-
 
 def do_rk4_step(rho,H,lindblads,tau,**kwargs):
     k1 = drho(rho,H,lindblads)
