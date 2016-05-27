@@ -1,6 +1,6 @@
 import multiprocessing
 
-def error_callback(exp):
+def err(exp):
     print(exp)
 
 def repeat_execution(n, f, args=[], kwargs={}):
@@ -15,18 +15,11 @@ def repeat_execution(n, f, args=[], kwargs={}):
     return results
 
 def star_execution(f, arg_list, kwarg_list):
-    pool = multiprocessing.Pool()
-    manager = multiprocessing.Manager()
-    results = manager.list()
+    pool = multiprocessing.Pool(4)
     call_with = zip(arg_list,kwarg_list)
-    def pool_callback(res):
-        results.append(res)
+    results = []
     for args,kwargs in call_with:
-        print(args)
-        print(kwargs)
-        pool.apply_async(f, args=args, kwds=kwargs, callback=pool_callback,
-                              error_callback=error_callback)
-
+        results.append(pool.apply_async(f, args, kwargs))
     pool.close()
     pool.join()
-    return results
+    return [res.get() for res in results]

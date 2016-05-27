@@ -73,18 +73,21 @@ class Conf():
             expr = expr.subs(var, sub)
         return float(expr.evalf())
     
+    def _load_H(self):
+        vals = []
+        for _key in H_PARAMS[self.type]:
+            print(_key)
+            _val = self.params.get(_key, DEFAULTS[self.type][_key])
+            if isinstance(_val, str):
+                _val = (self._process_symb(_val))
+            vals.append(_val)
+            setattr(self,_key,_val)
+        self.__H__ = H_FUNC[self.type](*vals)
+
     @property
     def H(self):
         if not self.__H__:
-            vals = []
-            for _key in H_PARAMS[self.type]:
-                print(_key)
-                _val = self.params.get(_key, DEFAULTS[self.type][_key])
-                if isinstance(_val, str):
-                    _val = (self._process_symb(_val))
-                vals.append(_val)
-                setattr(self,_key,_val)
-            self.__H__ = H_FUNC[self.type](*vals)
+            self._load_H()
         return self.__H__
 
     def build_generator_func(params):

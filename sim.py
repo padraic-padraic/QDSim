@@ -29,8 +29,7 @@ class Simulation(Conf):
 
     def run_solver(self,*args, **kwargs):
         steps = kwargs.pop('steps', 3000)
-        tau = kwargs.pop('tau', .5e-9)
-        print(steps,tau)
+        tau = kwargs.pop('tau', .1e-10)
         return self.solver(self.state, self.H, self.lindblads,
                                              steps, tau, **kwargs)
     def parse_states(self,results):
@@ -53,13 +52,11 @@ class Simulation(Conf):
         return bloch_vectors,ns
 
     def get_final_only(self, **kwargs):
-        steps = kwargs.pop('steps',3000)
-        tau = kwargs.pop('steps',.5e-9)
-        return (self.run_solver(kwargs))[-1]
+        return (self.run_solver(**kwargs))[-1]
 
     def average_trajectories(self,n=100,**kwargs):
         if sim.solver.__name__ == 'do_qt_mcsolve':
-            return self.run_solver(ntraj=n)
+            return self.run_solver(ntraj=n,**kwargs)
         else:
             res = repeat_execution(n, self.run_solver, [], kwargs)
             bloch_vectors = np.array([el[0] for el in res]).mean(0)
@@ -67,9 +64,7 @@ class Simulation(Conf):
             return bloch_vectors,ns
 
     def iter_params(self,arg_list,kwarg_list):
-        res = star_execution(self.get_final_only,arg_list,kwarg_list)
-        return
-
+        return star_execution(self.get_final_only,arg_list,kwarg_list)
 
     def make_plots(self,bvs,ns):
         b = qt.Bloch()
@@ -92,35 +87,13 @@ L1 = 0.01 * qt.tensor(qt.qeye(5),qt.destroy(2),I)
 L2 = 0.01 * qt.tensor(qt.qeye(5),I,qt.destroy(2))
 # lindblads = [L1,L2]
 
-def test_mc_sim():
-    sim = Simulation(do_jump_mc,qt.tensor(cav,q1,q2),H)
-    return sim.run_solver()
-
-def test_rk4_sim():
-    sim = Simulation(do_rk4,qt.tensor(cav,q1,q2),H)
-    sim.run_solver()
-
-def test_parallel():
-    sim = Simulation(do_jump_mc,qt.tensor(cav,q1,q2),H)
-    sim.average_trajectories(5)
-
 if __name__ == '__main__':
-    # sim = Simulation(do_jump_mc,qt.tensor(cav,q1,q2),H)
-    # bvs,ns = sim.average_trajectories(10)
-    # import timeit
-    # print(np.sum(timeit.Timer('test_mc_sim()',setup='from __main__ import test_mc_sim').repeat(5,1)))
-# print(np.sum(timeit.Timer('test_rk4_sim()',setup='from __main__ import test_rk4_sim').repeat(5,1)))
-    # print(timeit.Timer('test_parallel()', setup='from __main__ import test_parallel').repeat(1,1))
     states = []
-    sim = Simulation(do_qt_mesolve, state=qt.tensor(q1,q2),fname='2qtest.yaml')#, lindblads=lindblads)
-    arg_list = [[]]*3000
-    kwarg_list = [{'steps':i,'nsteps':2500} for i in range(1,3001)]
+    sim = Simulation(do_qt_mesolve, state=qt.tensor(q1, q2), fname='2qtest.yaml')
+    sim._load_H()
+    arg_list = [[]]*10000
+    kwarg_list = [{'steps':i,'nsteps':2500} for i in range(1,10001)]
     states = sim.iter_params(arg_list,kwarg_list)
-    sim.make_plots(*sim.parse_states(states))
-    # sim = Simulation(do_qt_mesolve, state=qt.tensor(q1,q2),fname='2qtest.yaml')#, lindblads=lindblads)
-    # sim.set_state(sim.iSWAP_U*sim.state)
-    # states = sim.run_solver(nsteps=2500)
-    sim.make_plots(*sim.parse_states(states))
-    # sim = Simulation(do_qt_mesolve,state=qt.tensor(cav,q1,q2))
-    # states= sim.run_solver(nsteps=2500)
-    # sim.make_plots(*sim.parse_states(states))
+    target = iSWAP*qt.tensor(q1,q2)
+    fids = np.array([qt.fidelity(target,state) for state in states])
+    print(np.max(fids),np.argmax(fids))

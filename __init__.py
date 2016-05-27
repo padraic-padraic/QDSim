@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import qutip as qt
 import numpy as np
 
@@ -11,6 +13,7 @@ iSWAP = np.zeros((4,4), dtype=np.complex_)
 iSWAP[0, 0], iSWAP[3,3] = 1, 1 
 iSWAP[1, 1], iSWAP[2,2] = 0.5*(1+1j), 0.5*(1+1j)
 iSWAP[1, 2], iSWAP[2,1] = 0.5*(1-1j), 0.5*(1-1j)
+iSWAP = qt.Qobj(iSWAP,dims=[[2,2],[2,2]])
 #We're treating '1' as the excited state
 SPlus = qt.create(2)
 SMinus = qt.destroy(2)
