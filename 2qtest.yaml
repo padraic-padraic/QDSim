@@ -1,10 +1,10 @@
 type: '2q_direct'
 params:
-  g_1: 6e7
-  g_2: 6e7
-  delta: 'w_q-w_c'
-  g: 'g_1*g_2*(delta+delta) / (delta*delta+delta*delta)'
-  w_1: 'w_q + g_1*g_2 / delta'
-  w_2: 'w_q + g_2*g_2 / delta'
+  g_1: .6e6
+  g_2: .6e6
+  Delta: 'w_c-w_q'
+  g: 'g_1*g_2/Delta'
+  w_1: 'w_q + g_1*g_2 / Delta'
+  w_2: 'w_q + g_2*g_2 / Delta'
   w_c: 5e9
-  w_q: 1e9
+  w_q: 3e9

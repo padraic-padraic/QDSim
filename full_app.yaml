@@ -1,0 +1,11 @@
+type: 'full_approx'
+params:
+  cav_dim: 5
+  g_1: .6e6
+  g_2: .6e6
+  delta: 'w_q-w_c'
+  g: 'g_1*g_2*(delta+delta) / (delta*delta+delta*delta)'
+  w_1: 'w_q + g_1*g_2 / delta'
+  w_2: 'w_q + g_2*g_2 / delta'
+  w_c: 5e9
+  w_q: .5e9

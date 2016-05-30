@@ -1,5 +1,5 @@
-import matplotlib
-matplotlib.use('Agg')
+# import matplotlib
+# matplotlib.use('Agg')
 import qutip as qt
 import numpy as np
 
@@ -11,9 +11,9 @@ SY = qt.sigmay()
 SZ = qt.sigmaz()
 iSWAP = np.zeros((4,4), dtype=np.complex_)
 iSWAP[0, 0], iSWAP[3,3] = 1, 1 
-iSWAP[1, 1], iSWAP[2,2] = 0.5*(1+1j), 0.5*(1+1j)
-iSWAP[1, 2], iSWAP[2,1] = 0.5*(1-1j), 0.5*(1-1j)
+iSWAP[1,2],iSWAP[2,1] = 1j,1j
 iSWAP = qt.Qobj(iSWAP,dims=[[2,2],[2,2]])
+root_iSWAP = iSWAP.sqrtm()
 #We're treating '1' as the excited state
 SPlus = qt.create(2)
 SMinus = qt.destroy(2)
@@ -71,19 +71,19 @@ def parse_dims(dims):
         return list(indices[qubits]),np.asscalar(indices[cav])
 
 def do_qt_mcsolve(state,H,lindblads,steps,tau,**kwargs):
-    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
-    if kwargs:
-        return qt.mcsolve(H,state,times,lindblads,[],
+    times = kwargs.pop('times',None)
+    if times is None:
+        times = np.linspace(0,steps*tau,steps,dtype=np.float_)
+    return qt.mcsolve(H,state,times,lindblads,[],
                              options=qt.Options(**kwargs)).states
     
 
 def do_qt_mesolve(state,H,lindblads,steps,tau,**kwargs):
-    times = np.linspace(0,steps*tau,steps,dtype=np.float_)
-    if kwargs:
-        return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[],
+    times = kwargs.pop('times',None)
+    if times is None:
+        times = np.linspace(0,steps*tau,steps,dtype=np.float_)
+    return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[],
                              options=qt.Options(**kwargs)).states
-    else:
-        return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[]).states
 
 def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1./10000):
     """Quantum Jump Monte Carlo for simulating Master Equation dynamics. 

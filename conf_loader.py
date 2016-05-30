@@ -6,7 +6,7 @@ import os
 import re
 import yaml
 
-#Handy Snippet from StackOverflow to make yaml correctly identify floats
+#Handy Snippet from StackOverflow to make pyyaml correctly identify floats
 LOADER = yaml.SafeLoader
 LOADER.add_implicit_resolver(
     u'tag:yaml.org,2002:float',
@@ -22,7 +22,8 @@ LOADER.add_implicit_resolver(
 H_PARAMS = {
     'full': ['cav_dim', 'w_1', 'w_2', 'w_c', 'g_1', 'g_2'],
     '1qb': ['cav_dim', 'w_1', 'w_c', 'g'],
-    '2q_direct': ['w_1', 'w_2', 'g']
+    '2q_direct': ['w_1', 'w_2', 'g'],
+    'full_approx': ['cav_dim', 'w_1', 'w_2', 'w_c', 'g']
 }
 
 DEFAULTS = {
@@ -38,13 +39,19 @@ DEFAULTS = {
             'g': 5e5},
     '2q_direct': {'w_1':6e9,
                   'w_2': 6e9,
-                  'g': 6e9}
+                  'g': 6e9},
+    'full_approx':{'cav_dim':5,
+                   'w_1':1e9,
+                   'w_2': 1e9,
+                   'w_c':5e9,
+                   'g': .6e6}
 }
 
 H_FUNC = {
     'full': full_hamiltonian,
     '1qb': single_hamiltonian,
-    '2q_direct': direct_hamiltonian
+    '2q_direct': direct_hamiltonian,
+    'full_approx': full_approx
 }
 
 class Conf():
@@ -76,12 +83,16 @@ class Conf():
     def _load_H(self):
         vals = []
         for _key in H_PARAMS[self.type]:
-            print(_key)
-            _val = self.params.get(_key, DEFAULTS[self.type][_key])
-            if isinstance(_val, str):
-                _val = (self._process_symb(_val))
-            vals.append(_val)
-            setattr(self,_key,_val)
+            val = getattr(self,_key,None)
+            if val:
+                vals.append(val)
+            else:
+                print(_key)
+                _val = self.params.get(_key, DEFAULTS[self.type][_key])
+                if isinstance(_val, str):
+                    _val = (self._process_symb(_val))
+                vals.append(_val)
+                setattr(self,_key,_val)
         self.__H__ = H_FUNC[self.type](*vals)
 
     @property
