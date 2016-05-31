@@ -65,7 +65,7 @@ def parse_dims(dims):
     qubits = dims == 2
     cav = np.logical_not(qubits)
     indices = np.arange(len(dims))
-    if not any(cav):
+    if not np.any(cav):
         return indices[qubits],None
     else:
         return list(indices[qubits]),np.asscalar(indices[cav])

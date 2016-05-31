@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from QDSim import *
 from QDSim.conf_loader import Conf
 from QDSim.dispatcher import repeat_execution, star_execution
+from QDSim.noise import thermal_state, cavity_loss, thermal_in, relaxation
 
 import os
 
@@ -12,8 +13,7 @@ class Simulation(Conf):
         super().__init__(kwargs.pop('fname','test.yaml'))
         state = kwargs.pop('state',None)
         if state:
-            self.state = state
-            self.dims = state.dims[0]
+            self.set_state(state)
         if kwargs.pop('H',None):
             self.H = H
         else:
@@ -22,7 +22,7 @@ class Simulation(Conf):
 
     def set_state(self, _state):
         self.state = _state
-        self.dims = _state.dims[0]
+        self.dims = np.array(_state.dims[0])
 
     def set_H(self,_H):
         self.H = _H
@@ -37,7 +37,7 @@ class Simulation(Conf):
                                              steps, tau, **kwargs)
     def parse_states(self,results):
         steps = len(results)
-        qubit_indices,cav_index = parse_dims(np.array(self.dims))
+        qubit_indices,cav_index = parse_dims(self.dims)
         cavity_sim = cav_index is not None
         if cavity_sim:
             n = qt.num(self.dims[cav_index])
@@ -107,11 +107,24 @@ q2 = (qt.basis(2,1))#+qt.basis(2,0)).unit()
 # lindblads = [L1,L2]
 
 if __name__ == '__main__':
+    cav = thermal_state(5e9,20e-3)
+    print(cav)
     sim = Simulation(do_qt_mesolve, state=qt.tensor(cav, q1, q2),
                      fname='time_dependent.yaml')
+    sim.append_L(cavity_loss(10000, sim.w_c, 20e-3, sim.dims))
+    sim.append_L(thermal_in(10000, sim.w_c, 20e-3, sim.dims))
+    sim.append_L(relaxation(1,sim.dims,1))
+    sim.append_L(relaxation(1,sim.dims,2))
     states = sim.run_solver(nsteps=1000,steps=25000,tau=1e-8,progress_bar=True)
     target = root_iSWAP * qt.tensor(q1, q2)
-    fids = [qt.fidelity(target, state.ptrace([1,2])) for state in states]
-    print(np.max(fids),np.argmax(fids)*1e-8)
-    plt.plot(np.linspace(0,len(fids)*1e-8), fids)
+    fids1 = [qt.fidelity(target, state.ptrace([1,2])) for state in states]
+    print(np.max(fids1),np.argmax(fids1)*1e-7)
+    # sim = Simulation(do_qt_mesolve, state=qt.tensor(q1, q2),
+    #                  fname='2qtest.yaml')
+    # states = sim.run_solver(nsteps=1000,steps=2500,tau=1e-7,progress_bar=True)
+    # target = root_iSWAP * qt.tensor(q1, q2)
+    # fids2 = [qt.fidelity(target, state) for state in states]
+    # print(np.max(fids1),np.argmax(fids1)*1e-7)
+    plt.plot(1e-7*np.arange(len(fids1)), fids1, 'r')
+             # 1e-7*np.arange(len(fids2)), fids2, 'b')
     plt.show()
