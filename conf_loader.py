@@ -111,30 +111,3 @@ class Conf():
 
     def build_generator_func(params):
         iter_keys = [key for key in params.keys() if isinstance(params[key], list)]
-
-# ----- Methods used to calculate the Swap-Basis transform, taken from 10.1103/PhysRevA.75.032329 ----- #
-    @property
-    def iSWAP_U(self):
-        dim = self.params['cav_dim']
-        if self.type != 'full':
-            return None
-        a = qt.tensor(qt.destroy(dim), I, I)
-        sm1 = qt.tensor(qt.qeye(dim), SMinus, I)
-        sm2 = qt.tensor(qt.qeye(dim), I, SMinus)
-        sp1 = qt.tensor(qt.qeye(dim), SPlus, I)
-        sp2 = qt.tensor(qt.qeye(dim), I, SPlus)
-        return (
-                (self.params['g_1']/self.delta(1)) * (a.dag()*sm1 - a*sp1) +
-                (self.params['g_2']/self.delta(2)) * (a.dag()*sm2 - a*sp2)).expm()
-
-    def delta(self, qubit):
-        if self.type == '1qb' and qubit > 1:
-            raise Exception
-        return self.params['w_'+str(qubit)] - self.params['w_c']
-
-    def chi(self, qubit):
-        if self.type == '1qb' and qubit > 1:
-            raise Exception
-        g_factor = self.params['g_'+str(qubit)]
-        delta = self.delta(qubit)
-        return g_factor*g_factor/delta
