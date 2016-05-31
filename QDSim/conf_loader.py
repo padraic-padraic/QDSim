@@ -67,7 +67,7 @@ H_FUNC = {
 
 class Conf():
     def __init__(self,fname):
-        with open(os.path.join(os.path.dirname(__file__),fname), 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__)+'/Hamiltonians',fname), 'r') as f:
             conf = yaml.load(f, Loader=LOADER)
             self.type = conf.get('type', None)
             self.params = conf.get('params', {})
@@ -98,7 +98,6 @@ class Conf():
             if val:
                 vals.append(val)
             else:
-                print(_key)
                 _val = self.params.get(_key, DEFAULTS[self.type][_key])
                 if isinstance(_val, str):
                     _val = (self._process_symb(_val))

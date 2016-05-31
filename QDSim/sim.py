@@ -13,12 +13,15 @@ __all__ = ["Simulaiton"]
 class Simulation(Conf):
     def __init__(self, solver, **kwargs):
         self.solver = solver
+        self.dims = None
         super().__init__(kwargs.pop('fname','test.yaml'))
         state = kwargs.pop('state',None)
         if state:
             self.set_state(state)
         if kwargs.pop('H',None):
             self.H = H
+            if self.dims is None:
+                self.dims = H.dims[0]
         else:
             self._load_H()
         self.lindblads = kwargs.pop('lindblads',[])
