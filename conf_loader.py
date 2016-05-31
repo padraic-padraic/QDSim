@@ -1,10 +1,12 @@
-from QDSim import qt
 from QDSim.hamiltonian import *
 from sympy import sympify
 
+import qutip as qt
 import os
 import re
 import yaml
+
+__all__ = ["Conf"]
 
 #Handy Snippet from StackOverflow to make pyyaml correctly identify floats
 LOADER = yaml.SafeLoader

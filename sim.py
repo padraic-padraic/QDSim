@@ -1,9 +1,11 @@
 from matplotlib import pyplot as plt
-from QDSim import *
 from QDSim.conf_loader import Conf
 from QDSim.dispatcher import repeat_execution, star_execution
 from QDSim.noise import *
+from QDSim.physics import * 
+from QDSim.solvers import *
 
+__all__ = ["Simulaiton"]
 
 class Simulation(Conf):
     def __init__(self, solver, **kwargs):
@@ -98,23 +100,22 @@ class Simulation(Conf):
 
 # cav = qt.Qobj(np.sqrt((qt.num(5)*qt.thermal_dm(5,0.04)).diag()))
 cav = qt.basis(5,0)
-q1 = qt.basis(2,0)
-q2 = (qt.basis(2,1)+qt.basis(2,0)).unit()
+# q1 = qt.basis(2,0)
+# q2 = (qt.basis(2,1)+qt.basis(2,0)).unit()
 # L1 = 0.01 * qt.tensor(qt.qeye(5),qt.destroy(2),I)
 # L2 = 0.01 * qt.tensor(qt.qeye(5),I,qt.destroy(2))
 # lindblads = [L1,L2]
 
 if __name__ == '__main__':
     cav = thermal_state(5e9,20e-3)
-    print(cav)
     sim = Simulation(do_qt_mesolve, state=qt.tensor(cav, q1, q2),
                      fname='time_dependent.yaml')
-    # sim.append_L(cavity_loss(10000, sim.w_c, 20e-3, sim.dims))
-    # sim.append_L(thermal_in(10000, sim.w_c, 20e-3, sim.dims))
-    # sim.append_L(relaxation(1,sim.dims,1))
-    # sim.append_L(relaxation(1,sim.dims,2))
-    # sim.append_L(decoherence(1e2,sim.dims,1))
-    # sim.append_L(decoherence(1e2,sim.dims,2))
+    sim.append_L(cavity_loss(10000, sim.w_c, 20e-3, sim.dims))
+    sim.append_L(thermal_in(10000, sim.w_c, 20e-3, sim.dims))
+    sim.append_L(relaxation(1,sim.dims,1))
+    sim.append_L(relaxation(1,sim.dims,2))
+    sim.append_L(decoherence(1e2,sim.dims,1))
+    sim.append_L(decoherence(1e2,sim.dims,2))
     states = sim.run_solver(nsteps=1000,steps=2500,tau=1e-8,progress_bar=True)
     target = root_iSWAP * qt.tensor(q1, q2)
     fids1 = [qt.fidelity(target, state.ptrace([1,2])) for state in states]

@@ -1,11 +1,14 @@
-"""Contians functions to build Hamiltonian recipes from a list of Parameters.
+"""Contains functions to build Hamiltonian recipes from a list of Parameters.
 If adding a new recipe, you also need to define a 'type' and add to the dictionaries
 of parameters, defaults and functions in QDSim.conf_loader.
 """
 
-from QDSim import qt, I, SZ, SPlus, SMinus
+from QDSim.physics import I, SZ, SPlus, SMinus
+
+import qutip as qt
 
 hbar = 1.05e-34
+__all__ = []
 
 def full_hamiltonian(cav_dim, w_1, w_2, w_c, g_1, g_2):
     """Return a QObj denoting the full Hamiltonian including cavity

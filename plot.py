@@ -1,6 +1,10 @@
 """Useful routines for making graphs from the output of a given simulation"""
 from matplotlib import pyplot as plt
-from QDSim import np, qt
+
+import numpy as np
+import qutip as qt
+
+__all__ = ["load_results"]
 
 def load_results(fname):
     with open(fname, 'r') as f:
