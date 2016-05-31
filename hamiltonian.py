@@ -46,3 +46,15 @@ def direct_hamiltonian(w_1, w_2, g_factor):
             0.5 * w_2 * qt.tensor(I, SZ) +
             g_factor * qt.tensor(SPlus, SMinus) +
             g_factor * qt.tensor(SMinus, SPlus))
+
+def interaction_picture(cav_dim, w_1, w_2, w_c, g_1, g_2):
+    delta_1 = w_1 - w_c
+    delta_2 = w_2 - w_c
+    a = qt.destroy(cav_dim)
+    # H0 = qt.qeye(cav_dim+2+2)
+    H1 = [qt.tensor(a.dag(),SMinus,I), 'exp(-1j *'+str(delta_1)+'*t)']
+    H2 = [qt.tensor(a.dag(),I,SMinus), 'exp(-1j *'+str(delta_2)+'*t)']
+    H3 = [qt.tensor(a,SPlus,I), 'exp(1j *'+str(delta_1)+'*t)']
+    H4 = [qt.tensor(a,I,SPlus), 'exp(1j *'+str(delta_2)+'*t)']
+    return [H1,H2,H3,H4]
+

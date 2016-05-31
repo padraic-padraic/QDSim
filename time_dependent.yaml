@@ -1,0 +1,8 @@
+type: 'time_dependent'
+params:
+  w_1: 4.99e9
+  w_2: 4.99e9
+  g_1: 6e6
+  g_2: 6e6
+  w_c: 5e9
+  cav_dim: 5

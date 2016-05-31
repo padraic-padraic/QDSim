@@ -23,7 +23,8 @@ H_PARAMS = {
     'full': ['cav_dim', 'w_1', 'w_2', 'w_c', 'g_1', 'g_2'],
     '1qb': ['cav_dim', 'w_1', 'w_c', 'g'],
     '2q_direct': ['w_1', 'w_2', 'g'],
-    'full_approx': ['cav_dim', 'w_1', 'w_2', 'w_c', 'g']
+    'full_approx': ['cav_dim', 'w_1', 'w_2', 'w_c', 'g'],
+    'time_dependent': ['cav_dim', 'w_1', 'w_2', 'w_c', 'g_1', 'g_2'],
 }
 
 DEFAULTS = {
@@ -44,14 +45,21 @@ DEFAULTS = {
                    'w_1':1e9,
                    'w_2': 1e9,
                    'w_c':5e9,
-                   'g': .6e6}
+                   'g': .6e6},
+   'time_dependent': {'cav_dim': 5,
+                      'w_1': 6e9,
+                      'w_2': 6e9,
+                      'w_c': 6e9,
+                      'g_1': 5e5,
+                      'g_2': 5e5},
 }
 
 H_FUNC = {
     'full': full_hamiltonian,
     '1qb': single_hamiltonian,
     '2q_direct': direct_hamiltonian,
-    'full_approx': full_approx
+    'full_approx': full_approx,
+    'time_dependent': interaction_picture
 }
 
 class Conf():

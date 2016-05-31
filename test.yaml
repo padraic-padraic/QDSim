@@ -1,8 +1,8 @@
 type: 'full'
 params:
-  w_1: .5e9
-  w_2: .5e9
+  w_1: 4.9e9
+  w_2: 4.9e9
   w_c: 5e9
-  g_1: 6e5
-  g_2: 6e5
+  g_1: 15e6
+  g_2: 15e6
   cav_dim: 5

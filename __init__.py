@@ -71,19 +71,23 @@ def parse_dims(dims):
         return list(indices[qubits]),np.asscalar(indices[cav])
 
 def do_qt_mcsolve(state,H,lindblads,steps,tau,**kwargs):
+    progress = kwargs.pop('progress_bar',None)
     times = kwargs.pop('times',None)
     if times is None:
         times = np.linspace(0,steps*tau,steps,dtype=np.float_)
     return qt.mcsolve(H,state,times,lindblads,[],
-                             options=qt.Options(**kwargs)).states
+                             options=qt.Options(**kwargs),
+                             progress_bar=progress).states
     
 
 def do_qt_mesolve(state,H,lindblads,steps,tau,**kwargs):
+    progress = kwargs.pop('progress_bar',None)
     times = kwargs.pop('times',None)
     if times is None:
         times = np.linspace(0,steps*tau,steps,dtype=np.float_)
     return qt.mesolve(H,qt.ket2dm(state),times,lindblads,[],
-                             options=qt.Options(**kwargs)).states
+                             options=qt.Options(**kwargs),
+                             progress_bar=progress).states
 
 def do_jump_mc(state,H,lindblads=[],steps=1000,tau=1./10000):
     """Quantum Jump Monte Carlo for simulating Master Equation dynamics. 
