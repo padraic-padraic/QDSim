@@ -1,4 +1,5 @@
-"""Helpful states"""
+"""Helpful states and operators"""
+import numpy as np
 import qutip as qt
 
 __all__ = ["I", "SX", "SY", "SZ", "iSWAP", "root_iSWAP", "SPlus", "SMinus"]

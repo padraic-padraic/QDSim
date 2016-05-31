@@ -1,6 +1,7 @@
 from QDSim.hamiltonian import *
 from sympy import sympify
 
+import numpy as np
 import qutip as qt
 import os
 import re

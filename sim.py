@@ -5,6 +5,9 @@ from QDSim.noise import *
 from QDSim.physics import * 
 from QDSim.solvers import *
 
+import qutip as qt
+import numpy as np
+
 __all__ = ["Simulaiton"]
 
 class Simulation(Conf):

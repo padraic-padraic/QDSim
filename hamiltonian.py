@@ -8,7 +8,8 @@ from QDSim.physics import I, SZ, SPlus, SMinus
 import qutip as qt
 
 hbar = 1.05e-34
-__all__ = []
+__all__ = ["full_hamiltonian", "single_hamiltonian", "full_approx",
+           "direct_hamiltonian", "interaction_picture"]
 
 def full_hamiltonian(cav_dim, w_1, w_2, w_c, g_1, g_2):
     """Return a QObj denoting the full Hamiltonian including cavity
