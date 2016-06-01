@@ -1,6 +1,8 @@
 """Module providing interfaces to different dynamics solvers"""
-import qutip as qt
 from random import random
+
+import qutip as qt
+import numpy as np
 
 __all__ = ["parse_dims", "measure_qubit", "do_qt_mcsolve", "do_qt_mesolve",
            "do_jump_mc", "do_rk4"]

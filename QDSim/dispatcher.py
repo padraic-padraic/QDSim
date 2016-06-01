@@ -1,5 +1,7 @@
 import multiprocessing
 
+from mock import patch
+
 __all__ = ["repeat_execution", "star_execution"]
 
 def err(exp):
@@ -20,7 +22,7 @@ def star_execution(f, arg_list, kwarg_list):
     pool = multiprocessing.Pool(4)
     call_with = zip(arg_list,kwarg_list)
     results = []
-    for args,kwargs in call_with:
+    for args, kwargs in call_with:
         results.append(pool.apply_async(f, args, kwargs))
     pool.close()
     pool.join()
