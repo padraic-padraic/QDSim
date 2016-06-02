@@ -1,7 +1,7 @@
 import numpy as np
 import qutip as qt
 
-from QDSim.physics import SZ
+from QDSim.physics import SZ, SMinus
 from QDSim.solvers import parse_dims
 
 __all__ =["get_n_therm", "thermal_state", "cavity_loss", "thermal_in",

@@ -1,4 +1,5 @@
 """Module providing interfaces to different dynamics solvers"""
+from QDSim.physics import SX, SY, SZ, I
 from random import random
 
 import qutip as qt
@@ -33,9 +34,9 @@ def get_prob(dm,L):
 
 def measure_qubit(dm):
     dm = dm.unit()
-    u = (SX*dm).tr()
-    v = (SY*dm).tr()
-    w = (SZ*dm).tr()
+    u = np.real((SX*dm).tr())
+    v = np.real((SY*dm).tr())
+    w = np.real((SZ*dm).tr())
     return u,v,w
 
 

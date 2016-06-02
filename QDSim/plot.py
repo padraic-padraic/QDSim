@@ -9,8 +9,8 @@ __all__ = ["load_results"]
 def load_results(fname):
     with open(fname, 'r') as f:
         lines = f.readlines()
-    lines = [l.strip for l in lines]
+    lines = [l.strip() for l in lines]
     lines = [l.split("\t") for l in lines]
     for i, _l in enumerate(lines):
-        lines[i] = map(float, _l)
+        lines[i] = list(map(float, _l))
     return np.array(lines, dtype=np.float_)

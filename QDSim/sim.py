@@ -56,7 +56,7 @@ class Simulation(Conf):
                 dm = results[i]
             bloch_vectors[i] = [measure_qubit(dm.ptrace(int(j))) for j in qubit_indices]
             if cavity_sim:
-                ns[i] = (n*dm.ptrace(cav_index)).tr()
+                ns[i] = np.real((n*dm.ptrace(cav_index)).tr())
         return bloch_vectors,ns
 
     def get_final_only(self, **kwargs):
@@ -87,45 +87,46 @@ class Simulation(Conf):
 
 
     def to_file(self, tau, states, outname, fidelities=[]):
-        bvs,ns = self.parse_states(states)
+        bvs, ns = self.parse_states(states)
         with open(outname+'.txt', 'w') as f:
             for i in range(ns.size):
                 f.write(str(tau*i) + "\t" + 
-                        str(bvs[i:0:0]) + "\t" + 
-                        str(bvs[i:0:1]) + "\t" + 
-                        str(bvs[i:0:2]) + "\t" +
-                        str(bvs[i:0:0]) + "\t" + 
-                        str(bvs[i:0:1]) + "\t" + 
-                        str(bvs[i:0:2]) + "\t" +                        
-                        ns[i] + "\n"
+                        str(bvs[i, 0, 0]) + "\t" + 
+                        str(bvs[i, 0, 1]) + "\t" + 
+                        str(bvs[i, 0, 2]) + "\t" +
+                        str(bvs[i, 0, 0]) + "\t" + 
+                        str(bvs[i, 0, 1]) + "\t" + 
+                        str(bvs[i, 0, 2]) + "\t" +                        
+                        str(ns[i]) + "\n"
                     )
-        if fidelities:
+        if fidelities != []:
             with open(outname+'_fids'+'.txt', 'w') as f:
-                for i in len(fids):
-                    f.write(str(tau*i) + "\t" + str(fids[i]) + "\n")
+                for i in range(len(fidelities)):
+                    f.write(str(tau*i) + "\t" + str(fidelities[i]) + "\n")
 
 # cav = qt.Qobj(np.sqrt((qt.num(5)*qt.thermal_dm(5,0.04)).diag()))
 cav = qt.basis(5,0)
-# q1 = qt.basis(2,0)
-# q2 = (qt.basis(2,1)+qt.basis(2,0)).unit()
+q1 = qt.basis(2,0)
+q2 = (qt.basis(2,1)+qt.basis(2,0)).unit()
 # L1 = 0.01 * qt.tensor(qt.qeye(5),qt.destroy(2),I)
 # L2 = 0.01 * qt.tensor(qt.qeye(5),I,qt.destroy(2))
 # lindblads = [L1,L2]
 
 if __name__ == '__main__':
-    cav = thermal_state(5e9,20e-3)
+    # cav = thermal_state(5e9,20e-3)
     sim = Simulation(do_qt_mesolve, state=qt.tensor(cav, q1, q2),
                      fname='time_dependent.yaml')
-    sim.append_L(cavity_loss(10000, sim.w_c, 20e-3, sim.dims))
-    sim.append_L(thermal_in(10000, sim.w_c, 20e-3, sim.dims))
-    sim.append_L(relaxation(1,sim.dims,1))
-    sim.append_L(relaxation(1,sim.dims,2))
-    sim.append_L(decoherence(1e2,sim.dims,1))
-    sim.append_L(decoherence(1e2,sim.dims,2))
-    states = sim.run_solver(nsteps=1000,steps=2500,tau=1e-8,progress_bar=True)
+    # sim.append_L(cavity_loss(10000, sim.w_c, 20e-3, sim.dims))
+    # sim.append_L(thermal_in(10000, sim.w_c, 20e-3, sim.dims))
+    # sim.append_L(relaxation(1,sim.dims,1))
+    # sim.append_L(relaxation(1,sim.dims,2))
+    # sim.append_L(decoherence(1e2,sim.dims,1))
+    # sim.append_L(decoherence(1e2,sim.dims,2))
+    states = sim.run_solver(nsteps=1000, steps=10000, tau=1e-9,
+                            progress_bar=True)
     target = root_iSWAP * qt.tensor(q1, q2)
     fids1 = [qt.fidelity(target, state.ptrace([1,2])) for state in states]
-    print(np.max(fids1),np.argmax(fids1)*1e-7)
+    # print(np.max(fids1),np.argmax(fids1)*1e-9)
     # sim = Simulation(do_qt_mesolve, state=qt.tensor(q1, q2),
     #                  fname='2qtest.yaml')
     # states = sim.run_solver(nsteps=1000,steps=2500,tau=1e-7,progress_bar=True)
@@ -133,5 +134,5 @@ if __name__ == '__main__':
     # fids2 = [qt.fidelity(target, state) for state in states]
     # print(np.max(fids1),np.argmax(fids1)*1e-7)
     plt.plot(1e-7*np.arange(len(fids1)), fids1, 'r')
-             # 1e-7*np.arange(len(fids2)), fids2, 'b')
+    #          # 1e-7*np.arange(len(fids2)), fids2, 'b')
     plt.show()
