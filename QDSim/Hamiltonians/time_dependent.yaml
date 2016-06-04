@@ -1,7 +1,7 @@
 type: 'time_dependent'
 params:
-  w_1: 4.9e9
-  w_2: 4.9e9
+  w_1: 5.5e9
+  w_2: 4.5e9
   g_1: 15e6
   g_2: 15e6
   w_c: 5e9

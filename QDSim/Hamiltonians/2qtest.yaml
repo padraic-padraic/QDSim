@@ -8,5 +8,5 @@ params:
   w_1: 'w_q1 + g_1*g_1 / Delta_1'
   w_2: 'w_q2 + g_2*g_2 / Delta_2'
   w_c: 5e9
-  w_q1: 4.5e9
-  w_q2: 4.5e9
+  w_q1: 4.9e9
+  w_q2: 4.9e9

@@ -8,7 +8,7 @@ from QDSim.solvers import *
 import qutip as qt
 import numpy as np
 
-__all__ = ["Simulaiton"]
+__all__ = ["Simulation"]
 
 class Simulation(Conf):
     def __init__(self, solver, **kwargs):
@@ -104,10 +104,9 @@ class Simulation(Conf):
                 for i in range(len(fidelities)):
                     f.write(str(tau*i) + "\t" + str(fidelities[i]) + "\n")
 
-# cav = qt.Qobj(np.sqrt((qt.num(5)*qt.thermal_dm(5,0.04)).diag()))
 cav = qt.basis(5,0)
 q1 = qt.basis(2,0)
-q2 = (qt.basis(2,1)+qt.basis(2,0)).unit()
+q2 = (qt.basis(2,1))#+qt.basis(2,0)).unit()
 # L1 = 0.01 * qt.tensor(qt.qeye(5),qt.destroy(2),I)
 # L2 = 0.01 * qt.tensor(qt.qeye(5),I,qt.destroy(2))
 # lindblads = [L1,L2]

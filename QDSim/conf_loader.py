@@ -96,7 +96,6 @@ class Conf():
         for _key in H_PARAMS[self.type]:
             val = getattr(self,_key,None)
             if val:
-                print('Got attr '+_key)
                 vals.append(val)
             else:
                 _val = self.params.get(_key, DEFAULTS[self.type][_key])

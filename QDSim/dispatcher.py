@@ -1,7 +1,5 @@
 import multiprocessing
 
-from mock import patch
-
 __all__ = ["repeat_execution", "star_execution"]
 
 def err(exp):

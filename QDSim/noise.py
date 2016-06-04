@@ -5,7 +5,7 @@ from QDSim.physics import SZ, SMinus
 from QDSim.solvers import parse_dims
 
 __all__ =["get_n_therm", "thermal_state", "cavity_loss", "thermal_in",
-          "decoherence", "relaxation"]
+          "decoherence", "relaxation", "get_lind_list"]
 
 K_B = 1.38e-23
 PLANCK = 6.63e-34
@@ -62,3 +62,12 @@ def relaxation(rate, dims, qubit=1):
         ops[qubit-1] = SMinus
     ops = [qt.qeye(2) if op == 0 else op for op in ops]
     return np.sqrt(rate) * qt.tensor(ops)
+
+def get_lind_list(w_C, Qfactor, T, gamma_1, gamma_2, dims):
+    cav_loss = cavity_loss(Qfactor, w_C, T, dims)
+    therm_in = thermal_in(Qfactor, w_C, T, dims)
+    d1 = decoherence(gamma_2, dims, 1)
+    d2 = decoherence(gamma_2, dims, 2)
+    r1 = decoherence(gamma_1, dims, 1)
+    r2 = decoherence(gamma_1, dims, 2)
+    return [cav_loss, therm_in, d1, d2, r1, r2]
